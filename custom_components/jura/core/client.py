@@ -112,19 +112,24 @@ class Client:
                         await self.ping_future
                     except asyncio.CancelledError:
                         pass
-
-                await self.client.disconnect()
             except TimeoutError:
                 pass
             except BleakError as e:
                 _LOGGER.debug("ping error", exc_info=e)
             except Exception as e:
                 _LOGGER.warning("ping error", exc_info=e)
-            finally:
+
+            if self.client:
+                try:
+                    await self.client.disconnect()
+                except Exception as e:
+                    _LOGGER.debug("disconnect error", exc_info=e)
                 self.client = None
-                if self.callback:
-                    self.callback(False)
-                await asyncio.sleep(1)
+
+            if self.callback:
+                self.callback(False)
+
+            await asyncio.sleep(1)
 
         self.ping_task = None
 
